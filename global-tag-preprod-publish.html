@@ -1,5 +1,6 @@
 <html>
 <body>
+<a href="#" name="trigger conversion" onclick="zt('trigger', 'vijay-global-tag-phase-2-testing-zync-conversion-8946');">Button 1</a>
 <script>
 (function () {
     // Extract all query params into an object
@@ -24,7 +25,12 @@
                 'https://cdn.phoenix.boomtrain.com/p13n/vijay-global-tag-phase-2-testing/p13n.min.js'
             );
             zt('ztTrack', {
+                "cartID": "{cartID}",
+                "cartTotal": "{cartTotal}",
+                "cartQty": "{cartQty}",
                 "productID": "{productID}",
+                "OrderAmount": "{OrderAmount}",
+                "OrderID": "{OrderID}",
                 "custID": "{custID}"
             }, {
                 onComplete: (ids) => console.log("OnComplete : " + JSON.stringify(ids))
