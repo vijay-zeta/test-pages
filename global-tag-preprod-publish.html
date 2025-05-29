@@ -1,0 +1,48 @@
+<html>
+<body>
+<script>
+(function () {
+    // Extract all query params into an object
+    const params = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+
+    // Template with placeholders
+    const snippetTemplate = `
+        (function() {
+            (function(z, t, a, g) {
+                z['zt'] = z['zt'] || function() {
+                    (z['_zt'] = z['_zt'] || []).push(arguments);
+                },
+                i = t.createElement(a),
+                n = t.getElementsByTagName(a)[0];
+                i.async = 1;
+                i.src = g;
+                n.parentNode.insertBefore(i, n);
+            })(
+                window,
+                document,
+                'script',
+                'https://cdn.phoenix.boomtrain.com/p13n/vijay-global-tag-phase-2-testing/p13n.min.js'
+            );
+            zt('ztTrack', {
+                "productID": "{productID}",
+                "custID": "{custID}"
+            }, {
+                onComplete: (ids) => console.log("OnComplete : " + JSON.stringify(ids))
+            });
+        })();
+    `;
+
+    // Replace all placeholders in the template with matching query param values
+    const finalSnippet = Object.entries(params).reduce((tpl, [key, value]) => {
+        const placeholder = new RegExp(`\\{${key}\\}`, 'g'); // global replace
+        return tpl.replace(placeholder, value);
+    }, snippetTemplate);
+
+    // Inject and execute the script
+    const script = document.createElement("script");
+    script.textContent = finalSnippet;
+    document.body.appendChild(script);
+})();
+</script>
+</body>
+</html>
