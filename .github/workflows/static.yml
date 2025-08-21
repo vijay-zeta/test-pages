@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages-${{ github.ref }}"
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -24,16 +24,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Disable Jekyll (serve files as-is)
+        run: touch .nojekyll
 
       - name: Record commit SHA (debug)
         run: echo "$GITHUB_SHA" > _deployed_commit.txt
 
-      - name: Upload artifact
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact (root)
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
