@@ -1,48 +1,161 @@
 <html>
-<body>
-<script>
-(function () {
-    // Extract all query params into an object
-    const params = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+  <body>
+    <script>
+      (function () {
+        // Extract all query params into an object
+        const params = Object.fromEntries(
+          new URLSearchParams(window.location.search).entries()
+        );
 
-    // Template with placeholders
-    const snippetTemplate = `
-        function zync_call() {
+        // Template with placeholders
+        const snippetTemplate = `
+          function zync_call() {
             var z = document.createElement("script");
-            var gpp="{gpp_string_469}";
-            var gpp_sid="{gpp_sid}";
-            var gdpr="{gdpr}";
-            var gdpr_consent="{gdpr_consent}";
-            var zmpID="vijay-p13n-testing";
-            var cache_buster=Date.now();
-            var PageUrl=encodeURIComponent(window.top.location.href).replace(/[!'()~]/g, escape).replace(/\\*/g, "%2A"); // This macro contains JavaScript that is compatible with most web browsers. If your deployment uses a tag manager, please ensure compatibility with your specific implementation
+            var gpp = "";
+            var gpp_sid = "";
+            var gdpr = "";
+            var gdpr_consent = "";
+            var zmpID = "vijay-p13n-testing";
+            var cache_buster = Date.now();
+            var PageUrl = encodeURIComponent(window.top.location.href)
+              .replace(/[!'()~]/g, escape)
+              .replace(/\\*/g, "%2A"); 
+            // This macro contains JavaScript that is compatible with most web browsers. 
+            // If your deployment uses a tag manager, please ensure compatibility 
+            // with your specific implementation
 
-            var z_src = "https://zync-kafka-external.dev.zetaglobal.io/sync?c=16b6410431b6374e780104abb0443ca8&p=88dc4ef77d18f044ee16314ce854091a&k=vijay-p13n-testing-pixel-8513&gpp="+gpp+"&gpp_sid="+gpp_sid+"&gdpr="+gdpr+"&gdpr_consent="+gdpr_consent+"&zmpID="+zmpID+"&cache_buster="+cache_buster+"&PageUrl="+PageUrl;
+            var z_src =
+              "https://zync-kafka-external.dev.zetaglobal.io/sync" +
+              "?c=16b6410431b6374e780104abb0443ca8" +
+              "&p=88dc4ef77d18f044ee16314ce854091a" +
+              "&k=vijay-p13n-testing-pixel-8513" +
+              "&gpp=" + gpp +
+              "&gpp_sid=" + gpp_sid +
+              "&gdpr=" + gdpr +
+              "&gdpr_consent=" + gdpr_consent +
+              "&zmpID=" + zmpID +
+              "&cache_buster=" + cache_buster +
+              "&PageUrl=" + PageUrl;
+
             z.setAttribute("src", z_src);
             document.body.appendChild(z);
-        }
+          }
 
-        if (['complete', 'interactive'].indexOf(document.readyState) >= 0) {
+          if (['complete', 'interactive'].indexOf(document.readyState) >= 0) {
             zync_call();
-        } else {
-            window.addEventListener("DOMContentLoaded", function(){
-                zync_call();
+          } else {
+            window.addEventListener("DOMContentLoaded", function () {
+              zync_call();
             });
-        }
-    `;
+          }
+        `;
 
-    // Replace all placeholders in the template with matching query param values
-    const finalSnippet = Object.entries(params).reduce((tpl, [key, value]) => {
-        const placeholder = new RegExp(`\\{${key}\\}`, 'g'); // global replace
-        return tpl.replace(placeholder, value);
-    }, snippetTemplate);
+        // Replace placeholders in the template with matching query param values
+        const finalSnippet = Object.entries(params).reduce((tpl, [key, value]) => {
+          const placeholder = new RegExp(`\\{${key}\\}`, 'g'); // global replace
+          return tpl.replace(placeholder, value);
+        }, snippetTemplate);
 
-    // Inject and execute the script
-    const script = document.createElement("script");
-    script.textContent = finalSnippet;
-    document.body.appendChild(script);
-})();
-</script>
-</body>
+        // Inject and execute the script
+        const script = document.createElement("script");
+        script.textContent = finalSnippet;
+        document.body.appendChild(script);
+
+        // Poller for window._bt or window.bt
+        (() => {
+          const intervalMs = 500;   // poll every 500ms
+          const maxWaitMs  = 30000; // give up after 30s
+          const deadline   = Date.now() + maxWaitMs;
+
+          function getBtInvoker() {
+            // 1) Global function bt(...)
+            if (typeof window.bt === "function") {
+              return (payload, callbacks) =>
+                window.bt("track", "signed_up", payload, callbacks);
+            }
+
+            const o = window._bt;
+            if (!o || typeof o !== "object") return null;
+
+            // 2) _bt.track(eventName, payload, callbacks)
+            if (typeof o.track === "function") {
+              return (payload, callbacks) =>
+                o.track("signed_up", payload, callbacks);
+            }
+
+            // 3) _bt.push([...]) — common queue pattern
+            if (typeof o.push === "function") {
+              return (payload, callbacks) =>
+                o.push(["track", "signed_up", payload, callbacks]);
+            }
+
+            // 4) _bt.call("track", "signed_up", ...)
+            if (typeof o.call === "function") {
+              return (payload, callbacks) =>
+                o.call("track", "signed_up", payload, callbacks);
+            }
+
+            return null; // not ready yet / unknown API shape
+          }
+
+          function makeIds(suffix) {
+            return "test_user_" + String(Math.random()).slice(2) + (suffix || "");
+          }
+
+          const tryRun = () => {
+            const invoke = getBtInvoker();
+
+            if (!invoke) {
+              if (Date.now() >= deadline) {
+                console.warn(
+                  "[bt] Timed out waiting for a callable API on window._bt / window.bt"
+                );
+                clearInterval(tid);
+              }
+              return; // keep polling
+            }
+
+            // ---- payload ----
+            const primary_user            = makeIds();
+            const active_user_email       = "test_user_active_"       + String(Math.random()).slice(2) + "@test-domain.com";
+            const inactive_user_email     = "test_user_inactive_"     + String(Math.random()).slice(2) + "@test-domain.com";
+            const explicit_new_user_email = "test_user_explicit_new_" + String(Math.random()).slice(2) + "@test-domain.com";
+            const implicit_new_user_email = "test_user_implicit_new_" + String(Math.random()).slice(2) + "@test-domain.com";
+
+            const payload = {
+              user_id: primary_user,
+              name: primary_user,
+              contacts: [
+                { value: active_user_email,       type: "email", status: "active"   },
+                { value: inactive_user_email,     type: "email", status: "inactive" },
+                { value: explicit_new_user_email, type: "email", status: "new"      },
+                { value: implicit_new_user_email, type: "email" }
+              ]
+            };
+
+            const callbacks = {
+              onSuccess: function () {
+                console.log("Track signed_up of user:", primary_user, "completed successfully!");
+              },
+              onFailure: function (err) {
+                console.log("Track signed_up completed with error:", JSON.stringify(err));
+              }
+            };
+
+            try {
+              invoke(payload, callbacks);
+            } catch (e) {
+              console.error("[bt] Invocation error:", e);
+            }
+            // ---- end payload ----
+
+            clearInterval(tid); // stop polling after first attempt
+          };
+
+          const tid = setInterval(tryRun, intervalMs);
+          tryRun(); // try immediately too
+        })();
+      })();
+    </script>
+  </body>
 </html>
-
