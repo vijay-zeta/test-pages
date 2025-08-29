@@ -1,0 +1,47 @@
+<html>
+<body>
+<script>
+(function () {
+    // Extract all query params into an object
+    const params = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+
+    // Template with placeholders
+    const snippetTemplate = `
+        function zync_call() {
+            var z = document.createElement("script");
+            var gpp="{gpp_string_469}";
+            var gpp_sid="{gpp_sid}";
+            var gdpr="{gdpr}";
+            var gdpr_consent="{gdpr_consent}";
+            var zmpID="vijay-prod-testing";
+            var cache_buster=Date.now();
+            var PageUrl=encodeURIComponent(window.top.location.href).replace(/[!'()~]/g, escape).replace(/\\*/g, "%2A"); // This macro contains JavaScript that is compatible with most web browsers. If your deployment uses a tag manager, please ensure compatibility with your specific implementation
+
+            var z_src = "https://live.rezync.com/sync?c=16b6410431b6374e780104abb0443ca8&p=d354c0b5c133c9eeca9c9ed062bf3fe7&k=vijay-prod-testing-pixel-3562&gpp="+gpp+"&gpp_sid="+gpp_sid+"&gdpr="+gdpr+"&gdpr_consent="+gdpr_consent+"&zmpID="+zmpID+"&cache_buster="+cache_buster+"&PageUrl="+PageUrl;
+            z.setAttribute("src", z_src);
+            document.body.appendChild(z);
+        }
+
+        if (['complete', 'interactive'].indexOf(document.readyState) >= 0) {
+            zync_call();
+        } else {
+            window.addEventListener("DOMContentLoaded", function(){
+                zync_call();
+            });
+        }
+    `;
+
+    // Replace all placeholders in the template with matching query param values
+    const finalSnippet = Object.entries(params).reduce((tpl, [key, value]) => {
+        const placeholder = new RegExp(`\\{${key}\\}`, 'g'); // global replace
+        return tpl.replace(placeholder, value);
+    }, snippetTemplate);
+
+    // Inject and execute the script
+    const script = document.createElement("script");
+    script.textContent = finalSnippet;
+    document.body.appendChild(script);
+})();
+</script>
+</body>
+</html>
