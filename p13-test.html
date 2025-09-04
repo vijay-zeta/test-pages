@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>p13n Test</title>
+  <script>
+    (function() {
+      var SITEID = 'vijay-p13n-testing';
+      (function(b, t, r, a, i, n) {
+        b['bt'] = b['bt'] || function() {
+          (b['_bt'] = b['_bt'] || []).push(arguments);
+        };
+        i = t.createElement(r);
+        n = t.getElementsByTagName(r)[0];
+        i.async = 1;
+        i.src = a;
+        n.parentNode.insertBefore(i, n);
+      })(
+        window,
+        document,
+        'script',
+        'https://cdn.phoenix.boomtrain.com/p13n/' + SITEID + '/p13n.js'
+      );
+
+      bt('initialize', SITEID, {
+        externalIds: {
+          zync: '53611fe7-0488-4f3d-8208-c339942b6ca4:1756944328.1844208'
+        }
+      });
+    })();
+  </script>
+</head>
+<body>
+  <h1>P13n Integration Test Page</h1>
+  <p>Check console/network requests to verify initialization.</p>
+</body>
+</html>
