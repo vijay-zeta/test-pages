@@ -29,5 +29,118 @@
         });
     }
     </script>
+    <script>
+    (function () {
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    
+      const waitForBT = (timeoutMs = 15000, intervalMs = 200) =>
+        new Promise((resolve, reject) => {
+          const start = Date.now();
+          (function poll() {
+            if ((window.bt && typeof window.bt === "function") || window._bt) {
+              resolve();
+              return;
+            }
+            if (Date.now() - start > timeoutMs) {
+              reject(new Error("Timed out waiting for bt/_bt"));
+              return;
+            }
+            setTimeout(poll, intervalMs);
+          })();
+        });
+    
+      const randomCustId = () => Math.floor(Math.random() * 100000).toString();
+      const randomEmail = () =>
+        `user${Math.floor(Math.random() * 100000)}@example.com`;
+    
+      function updateUserPromise({ custId, email, clearIdentified = false }) {
+        return new Promise((resolve) => {
+          const call = window.bt
+            ? window.bt
+            : (window._bt && typeof window._bt.bt === "function"
+                ? window._bt.bt.bind(window._bt)
+                : null);
+    
+          if (!call) {
+            console.error("bt function not found");
+            resolve({ ok: false, error: "bt function not found" });
+            return;
+          }
+    
+          call(
+            "updateUser",
+            {
+              unique_client_ids: [{ name: "cust_id", value: custId }],
+              email,
+              clearIdentified
+            },
+            {
+              onSuccess: () => {
+                console.log(
+                  `%cupdateUser succeeded (cust_id=${custId}, email=${email}, clearIdentified=${clearIdentified})`,
+                  "color:green;font-weight:bold;"
+                );
+                console.log(JSON.stringify(_bt._identity, null, 2));
+                resolve({ ok: true });
+              },
+              onFailure: (error) => {
+                console.log(
+                  `%cupdateUser failed (cust_id=${custId}, email=${email}, clearIdentified=${clearIdentified})`,
+                  "color:red;font-weight:bold;",
+                  error
+                );
+                resolve({ ok: false, error });
+              }
+            }
+          );
+        });
+      }
+    
+      async function run() {
+        try {
+          await waitForBT();
+          console.log("%c_bt/bt detected. Running 4 test cases…", "color:#0366d6;font-weight:bold;");
+    
+          // 1) Random with clearIdentified=true
+          await updateUserPromise({
+            custId: randomCustId(),
+            email: randomEmail(),
+            clearIdentified: true
+          });
+          await sleep(500);
+    
+          // 2) Random with clearIdentified=false
+          const custId2 = randomCustId();
+          const email2 = randomEmail();
+          await updateUserPromise({
+            custId: custId2,
+            email: email2,
+            clearIdentified: false
+          });
+          await sleep(500);
+    
+          // 3) Random with clearIdentified=true
+          await updateUserPromise({
+            custId: randomCustId(),
+            email: randomEmail(),
+            clearIdentified: true
+          });
+          await sleep(500);
+    
+          // 4) Reuse same as #2, but with clearIdentified=true
+          await updateUserPromise({
+            custId: custId2,
+            email: email2,
+            clearIdentified: true
+          });
+    
+          console.log("%cAll 4 test cases completed.", "color:#16a34a;font-weight:bold;");
+        } catch (e) {
+          console.error("Failed to run tests:", e);
+        }
+      }
+      run();
+    })();
+</script>
   </body>
 </html>
