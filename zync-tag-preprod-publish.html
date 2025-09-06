@@ -102,27 +102,27 @@
           console.log("%c_bt/bt detected. Running 4 test cases…", "color:#0366d6;font-weight:bold;");
     
           // 1) Random with clearIdentified=true
+          const custId1 = randomCustId();
+          const email1 = randomEmail();
           await updateUserPromise({
-            custId: randomCustId(),
-            email: randomEmail(),
+            custId: custId1,
+            email: email1,
             clearIdentified: true
           });
           await sleep(500);
     
           // 2) Random with clearIdentified=false
           const custId2 = randomCustId();
-          const email2 = randomEmail();
           await updateUserPromise({
             custId: custId2,
-            email: email2,
             clearIdentified: false
           });
           await sleep(500);
     
           // 3) Random with clearIdentified=true
+          const custId3 = randomCustId();
           await updateUserPromise({
-            custId: randomCustId(),
-            email: randomEmail(),
+            custId: custId3,
             clearIdentified: true
           });
           await sleep(500);
@@ -130,11 +130,19 @@
           // 4) Reuse same as #2, but with clearIdentified=true
           await updateUserPromise({
             custId: custId2,
-            email: email2,
             clearIdentified: true
           });
-    
-          console.log("%cAll 4 test cases completed.", "color:#16a34a;font-weight:bold;");
+          await sleep(500);
+
+          // 5) Reload the page with bt_ee=<first email>
+          const url = new URL(window.location.href);
+          url.searchParams.set("bt_ee", email1);
+          console.log(`%cReloading with bt_ee=${email1}`, "color:purple;font-weight:bold;");
+          window.location.href = url.toString();
+          await sleep(500);
+          
+          console.log(JSON.stringify(_bt._identity, null, 2));
+          console.log("%cAll 5 test cases completed.", "color:#16a34a;font-weight:bold;");
         } catch (e) {
           console.error("Failed to run tests:", e);
         }
