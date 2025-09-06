@@ -54,25 +54,24 @@
         `user${Math.floor(Math.random() * 100000)}@example.com`;
 
       (function wrapConsoleOnce() {
-        if (window.__btDemoConsoleWrapped) return; // already wrapped
-        window.__btDemoConsoleWrapped = true;
+          if (window.__btDemoConsoleWrapped) return;
+          window.__btDemoConsoleWrapped = true;
       
-        const origLog = console.log;
-        console.log = function (...args) {
-          try {
-            const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
-            logs.push(
-              args.map((a) =>
-                typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)
-              ).join(" ")
-            );
-            sessionStorage.setItem("bt_demo_logs", JSON.stringify(logs));
-          } catch (e) {
-            // ignore storage errors
-          }
-          origLog.apply(console, args);
-        };
-      })();
+          const origLog = console.log;
+          console.log = function (...args) {
+            // Always preserve
+            try {
+              const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
+              const line = args.map(a => (typeof a === "object" ? JSON.stringify(a, null, 2) : String(a))).join(" ");
+              logs.push(line);
+              sessionStorage.setItem("bt_demo_logs", JSON.stringify(logs));
+            } catch (_) {}
+      
+            // Only print if not muted
+            const muted = window.__btDemoMuteConsole || sessionStorage.getItem("bt_demo_mute") === "1";
+            if (!muted) origLog.apply(console, args);
+          };
+        })();
 
       function replayLogs() {
           const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
@@ -149,7 +148,9 @@
           const alreadyReloaded = sessionStorage.getItem("bt_ee_reloaded");
     
           if (!alreadyReloaded) {
-            console.log("%cFirst load: running test cases 1–4…", "color:#0366d6;font-weight:bold;");
+            // 🔇 Mute printing on first load; still preserve to storage
+            window.__btDemoMuteConsole = true;
+            sessionStorage.setItem("bt_demo_mute", "1");
     
             // 1) Random with clearIdentified=true (with email)
             const custId1 = randomCustId();
@@ -179,10 +180,14 @@
             window.location.replace(url.toString());
     
           } else {
-            console.log("%cSecond load: skipping tests 1–4, continuing post-reload", "color:orange;font-weight:bold;");
+            // 🔊 Unmute on second load, replay stored logs, then clear flags
+            window.__btDemoMuteConsole = false;
+            sessionStorage.removeItem("bt_demo_mute");
+
             replayLogs();
-            console.log(JSON.stringify(_bt._identity, null, 2));
+            
             console.log("bt_ee param:", new URL(window.location.href).searchParams.get("bt_ee"));
+            console.log(JSON.stringify(_bt._identity, null, 2));
     
             // clear the reload flag so future runs start fresh
             sessionStorage.removeItem("bt_ee_reloaded");
