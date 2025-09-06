@@ -52,6 +52,36 @@
       const randomCustId = () => Math.floor(Math.random() * 100000).toString();
       const randomEmail = () =>
         `user${Math.floor(Math.random() * 100000)}@example.com`;
+
+      (function wrapConsoleOnce() {
+        if (window.__btDemoConsoleWrapped) return; // already wrapped
+        window.__btDemoConsoleWrapped = true;
+      
+        const origLog = console.log;
+        console.log = function (...args) {
+          try {
+            const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
+            logs.push(
+              args.map((a) =>
+                typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)
+              ).join(" ")
+            );
+            sessionStorage.setItem("bt_demo_logs", JSON.stringify(logs));
+          } catch (e) {
+            // ignore storage errors
+          }
+          origLog.apply(console, args);
+        };
+      })();
+
+      function replayLogs() {
+          const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
+          if (logs.length) {
+            console.log("%cReplaying preserved logs from before reload:", "color:blue;font-weight:bold;");
+            logs.forEach((msg) => console.log(msg));
+            sessionStorage.removeItem("bt_demo_logs"); // clear after replay
+          }
+      }
     
       function updateUserPromise({ custId, email, clearIdentified = false }) {
         return new Promise((resolve) => {
@@ -146,12 +176,12 @@
             url.searchParams.set("bt_ee", email1);
             sessionStorage.setItem("bt_ee_reloaded", "1");
             console.log(`%cReloading with bt_ee=${email1}`, "color:purple;font-weight:bold;");
-            preserveLog(`Reloading with bt_ee=${email1}`);
             window.location.replace(url.toString());
     
           } else {
             console.log("%cSecond load: skipping tests 1–4, continuing post-reload", "color:orange;font-weight:bold;");
             replayLogs();
+            console.log(JSON.stringify(_bt._identity, null, 2));
             console.log("bt_ee param:", new URL(window.location.href).searchParams.get("bt_ee"));
     
             // clear the reload flag so future runs start fresh
