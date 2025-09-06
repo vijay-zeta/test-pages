@@ -53,35 +53,6 @@
       const randomEmail = () =>
         `user${Math.floor(Math.random() * 100000)}@example.com`;
 
-      (function wrapConsoleOnce() {
-          if (window.__btDemoConsoleWrapped) return;
-          window.__btDemoConsoleWrapped = true;
-      
-          const origLog = console.log;
-          console.log = function (...args) {
-            // Always preserve
-            try {
-              const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
-              const line = args.map(a => (typeof a === "object" ? JSON.stringify(a, null, 2) : String(a))).join(" ");
-              logs.push(line);
-              sessionStorage.setItem("bt_demo_logs", JSON.stringify(logs));
-            } catch (_) {}
-      
-            // Only print if not muted
-            const muted = window.__btDemoMuteConsole || sessionStorage.getItem("bt_demo_mute") === "1";
-            if (!muted) origLog.apply(console, args);
-          };
-        })();
-
-      function replayLogs() {
-          const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
-          if (logs.length) {
-            console.log("%cReplaying preserved logs from before reload:", "color:blue;font-weight:bold;");
-            logs.forEach((msg) => console.log(msg));
-            sessionStorage.removeItem("bt_demo_logs"); // clear after replay
-          }
-      }
-    
       function updateUserPromise({ custId, email, clearIdentified = false }) {
         return new Promise((resolve) => {
           const call = window.bt
@@ -124,34 +95,14 @@
           );
         });
       }
-    
-    // --- log preservation ---
-      function preserveLog(message) {
-        const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
-        logs.push(message);
-        sessionStorage.setItem("bt_demo_logs", JSON.stringify(logs));
-      }
-    
-      function replayLogs() {
-        const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
-        if (logs.length) {
-          console.log("%cReplaying preserved logs from before reload:", "color:blue;font-weight:bold;");
-          logs.forEach((msg) => console.log(msg));
-          sessionStorage.removeItem("bt_demo_logs"); // clear after replay
-        }
-      }
+  
     
       async function run() {
         try {
           await waitForBT();
-    
-          const alreadyReloaded = sessionStorage.getItem("bt_ee_reloaded");
-    
-          if (!alreadyReloaded) {
-            // 🔇 Mute printing on first load; still preserve to storage
-            window.__btDemoMuteConsole = true;
-            sessionStorage.setItem("bt_demo_mute", "1");
-    
+
+          const params = new URLSearchParams(window.location.search);
+          if (!params.has("bt_ee")) {
             // 1) Random with clearIdentified=true (with email)
             const custId1 = randomCustId();
             const email1 = randomEmail();
@@ -165,32 +116,21 @@
     
             // 3) Random with clearIdentified=true (no email)
             const custId3 = randomCustId();
-            await updateUserPromise({ custId: custId3, clearIdentified: true });
+            const email3 = randomEmail();
+
+            await updateUserPromise({ custId: custId3, email: email3, clearIdentified: true });
             await sleep(500);
     
             // 4) Reuse same as #2, but with clearIdentified=true
             await updateUserPromise({ custId: custId2, clearIdentified: true });
             await sleep(500);
     
-            // 5) Reload once with bt_ee=<first email>
-            const url = new URL(window.location.href);
-            url.searchParams.set("bt_ee", email1);
-            sessionStorage.setItem("bt_ee_reloaded", "1");
-            console.log(`%cReloading with bt_ee=${email1}`, "color:purple;font-weight:bold;");
-            window.location.replace(url.toString());
     
           } else {
-            // 🔊 Unmute on second load, replay stored logs, then clear flags
-            window.__btDemoMuteConsole = false;
-            sessionStorage.removeItem("bt_demo_mute");
-
-            replayLogs();
             
             console.log("bt_ee param:", new URL(window.location.href).searchParams.get("bt_ee"));
             console.log(JSON.stringify(_bt._identity, null, 2));
-    
-            // clear the reload flag so future runs start fresh
-            sessionStorage.removeItem("bt_ee_reloaded");
+
           }
         } catch (e) {
           console.error("Failed to run tests:", e);
