@@ -96,6 +96,22 @@
         });
       }
     
+    // --- log preservation ---
+      function preserveLog(message) {
+        const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
+        logs.push(message);
+        sessionStorage.setItem("bt_demo_logs", JSON.stringify(logs));
+      }
+    
+      function replayLogs() {
+        const logs = JSON.parse(sessionStorage.getItem("bt_demo_logs") || "[]");
+        if (logs.length) {
+          console.log("%cReplaying preserved logs from before reload:", "color:blue;font-weight:bold;");
+          logs.forEach((msg) => console.log(msg));
+          sessionStorage.removeItem("bt_demo_logs"); // clear after replay
+        }
+      }
+    
       async function run() {
         try {
           await waitForBT();
@@ -130,22 +146,24 @@
             url.searchParams.set("bt_ee", email1);
             sessionStorage.setItem("bt_ee_reloaded", "1");
             console.log(`%cReloading with bt_ee=${email1}`, "color:purple;font-weight:bold;");
+            preserveLog(`Reloading with bt_ee=${email1}`);
             window.location.replace(url.toString());
-            await sleep(500);
-            console.log(JSON.stringify(_bt._identity, null, 2));
     
           } else {
             console.log("%cSecond load: skipping tests 1–4, continuing post-reload", "color:orange;font-weight:bold;");
-            // Here you can add any logic to validate/test behavior after reload
+            replayLogs();
             console.log("bt_ee param:", new URL(window.location.href).searchParams.get("bt_ee"));
+    
+            // clear the reload flag so future runs start fresh
+            sessionStorage.removeItem("bt_ee_reloaded");
           }
         } catch (e) {
           console.error("Failed to run tests:", e);
         }
       }
       
-      run();
-    })();
-</script>
+     run();
+   })();
+   </script>
   </body>
 </html>
