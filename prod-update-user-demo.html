@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>clearIdentified demo</title>
+  </head>
+  <body>
+    <script async type="text/javascript">
+    function zync_call() {
+        var z = document.createElement("script");
+        var gpp="${GPP_STRING_469}";
+        var gpp_sid="${GPP_SID}";
+        var gdpr="${GDPR}";
+        var gdpr_consent="${GDPR_CONSENT_469}";
+        var zmpID="vijay-test";
+        var cache_buster=Date.now();
+        var PageUrl=encodeURIComponent(window.top.location.href).replace(/[!'()~]/g, escape).replace(/\*/g, "%2A"); // This macro contains JavaScript that is compatible with most web browsers. If your deployment uses a tag manager, please ensure compatibility with your specific implementation
+
+        var z_src = "https://live.rezync.com/sync?c=16b6410431b6374e780104abb0443ca8&p=c1a95d11ed75039c195fe11427746aee&k=vijay-test-pixel-9205&gpp="+gpp+"&gpp_sid="+gpp_sid+"&gdpr="+gdpr+"&gdpr_consent="+gdpr_consent+"&zmpID="+zmpID+"&cache_buster="+cache_buster+"&PageUrl="+PageUrl;
+        z.setAttribute("src", z_src);
+        document.body.appendChild(z);
+    }
+
+    if (['complete', 'interactive'].indexOf(document.readyState) >= 0) {
+        zync_call();
+    } else {
+        window.addEventListener("DOMContentLoaded", function(){
+            zync_call();
+        });
+    }
+    </script>
+    <script>
+    (function () {
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    
+      const waitForBT = (timeoutMs = 15000, intervalMs = 200) =>
+        new Promise((resolve, reject) => {
+          const start = Date.now();
+          (function poll() {
+            if ((window.bt && typeof window.bt === "function") || window._bt) {
+              resolve();
+              return;
+            }
+            if (Date.now() - start > timeoutMs) {
+              reject(new Error("Timed out waiting for bt/_bt"));
+              return;
+            }
+            setTimeout(poll, intervalMs);
+          })();
+        });
+    
+      const randomCustId = () => Math.floor(Math.random() * 100000).toString();
+      const randomEmail = () =>
+        `user${Math.floor(Math.random() * 100000)}@example.com`;
+
+      function updateUserPromise({ custId, email, clearIdentified = false }) {
+        return new Promise((resolve) => {
+          const call = window.bt
+            ? window.bt
+            : (window._bt && typeof window._bt.bt === "function"
+                ? window._bt.bt.bind(window._bt)
+                : null);
+    
+          if (!call) {
+            console.error("bt function not found");
+            resolve({ ok: false, error: "bt function not found" });
+            return;
+          }
+    
+          call(
+            "updateUser",
+            {
+              "unique_client_ids": [{ name: "cust_id", value: custId }],
+              "email": email,
+              "clearIdentified": clearIdentified
+            },
+            {
+              onSuccess: () => {
+                console.log(
+                  `%cupdateUser succeeded (cust_id=${custId}, email=${email}, clearIdentified=${clearIdentified})`,
+                  "color:green;font-weight:bold;"
+                );
+                console.log(JSON.stringify(_bt._identity, null, 2));
+                resolve({ ok: true });
+              },
+              onFailure: (error) => {
+                console.log(
+                  `%cupdateUser failed (cust_id=${custId}, email=${email}, clearIdentified=${clearIdentified})`,
+                  "color:red;font-weight:bold;",
+                  error
+                );
+                resolve({ ok: false, error });
+              }
+            }
+          );
+        });
+      }
+  
+    
+      async function run() {
+        try {
+          await waitForBT();
+
+          const params = new URLSearchParams(window.location.search);
+          if (!params.has("bt_ee")) {
+            // 1) Random with clearIdentified=true (with email)
+            const custId1 = randomCustId();
+            const email1 = randomEmail();
+            await updateUserPromise({ custId: custId1, email: email1, clearIdentified: true });
+            await sleep(500);
+    
+            // 2) Random with clearIdentified=false (no email)
+            const custId2 = randomCustId();
+            await updateUserPromise({ custId: custId2, clearIdentified: false });
+            await sleep(500);
+    
+            // 3) Random with clearIdentified=true (no email)
+            const custId3 = randomCustId();
+            const email3 = randomEmail();
+
+            await updateUserPromise({ custId: custId3, email: email3, clearIdentified: true });
+            await sleep(500);
+    
+            // 4) Reuse same as #2, but with clearIdentified=true
+            await updateUserPromise({ custId: custId2, clearIdentified: true });
+            await sleep(500);
+    
+    
+          } else {
+            
+            console.log("bt_ee param:", new URL(window.location.href).searchParams.get("bt_ee"));
+            console.log(JSON.stringify(_bt._identity, null, 2));
+
+          }
+        } catch (e) {
+          console.error("Failed to run tests:", e);
+        }
+      }
+      
+     run();
+   })();
+   </script>
+  </body>
+</html>
