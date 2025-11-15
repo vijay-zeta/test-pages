@@ -25,13 +25,23 @@
                 'https://cdn.phoenix.boomtrain.com/p13n/vijay-global-tag-phase-2-testing/p13n.min.js'
             );
             zt('ztTrack', {
+                "custom1": "{custom1}",
+                "custom2": "{gt_custom_1}",
+                "categoryID": "{categoryID}",
+                "productID": "{productID}",
+                "custID": "{custID}",
                 "cartID": "{cartID}",
                 "cartTotal": "{cartTotal}",
                 "cartQty": "{cartQty}",
-                "productID": "{productID}",
-                "OrderAmount": "{OrderAmount}",
                 "OrderID": "{OrderID}",
-                "custID": "{custID}"
+                "OrderAmount": "{OrderAmount}",
+                "gpp_sid": "${GPP_SID}",
+                "QAAutoDC20250529010542": "{QAAutoDC20250529010542}",
+                "cookieless_ids": "{cookieless_ids}",
+                "gdpr": "${GDPR}",
+                "gdpr_consent": "${GDPR_CONSENT_469}",
+                "gpp": "${GPP_STRING_469}",
+                "dsp_cookie_sync_flag": "{dsp_cookie_sync_flag}"
             }, {
                 onComplete: (ids) => console.log("OnComplete : " + JSON.stringify(ids))
             });
