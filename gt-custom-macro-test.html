@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zync Custom Macro Test</title>
+</head>
+<body>
+  <h1>Zync Custom Macro Test Page</h1>
+
+  <script async type="text/javascript">
+    (function() {
+        (function(z, t, a, g) {
+            z['zt'] = z['zt'] || function() {
+                (z['_zt'] = z['_zt'] || []).push(arguments);
+            },
+            i = t.createElement(a),
+            n = t.getElementsByTagName(a)[0];
+            i.async = 1;
+            i.src = g;
+            n.parentNode.insertBefore(i, n);
+        })(
+            window,
+            document,
+            'script',
+            'https://cdn.phoenix.boomtrain.com/p13n/vijay-test-dec-1/p13n.min.js'
+        );
+        zt('ztTrack', {
+            "custom1": "test-cust-var-1-val",
+            "custom2": "test-cust-var-2-val",
+            "gpp_sid": "",
+            "gdpr": "",
+            "gdpr_consent": "",
+            "gpp": "",
+            "dsp_cookie_sync_flag": "0"
+        });
+    })();
+  </script>
+</body>
+</html>
+
