@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zync Custom Macro Test</title>
+  <title>Global Tag Custom Macro Test</title>
 </head>
 <body>
-  <h1>Zync Custom Macro Test Page</h1>
+  <h1>Global Tag Custom Macro Test</h1>
 
   <script async type="text/javascript">
     (function() {
@@ -23,15 +23,16 @@
             window,
             document,
             'script',
-            'https://cdn.phoenix.boomtrain.com/p13n/vijay-test-dec-1/p13n.min.js'
+            'https://cdn.phoenix.boomtrain.com/p13n/vijay-gt-testing-jan-7/p13n.min.js'
         );
         zt('ztTrack', {
-            "custom1": "test-cust-var-1-val",
-            "custom2": "test-cust-var-2-val",
-            "gpp_sid": "",
-            "gdpr": "",
-            "gdpr_consent": "",
-            "gpp": "",
+            "custom1": "my-custom-value-abc123",
+            "gpp_sid": "2_4_6_8",
+            "cookieless_ids": "cid_xK9mNp2qR7vL",
+            "QAAutoDC20250618010536": "qa-auto-test-value-xyz789",
+            "gdpr": "1",
+            "gdpr_consent": "CPzHq4APzHq4AAOACACENA8EgAAAAAAEPgAAwAAAgCgAoA",
+            "gpp": "DBABMA~CPzHq4APzHq4AAOACACENA8EgAAAAAAEPgAAwAAA.QA",
             "dsp_cookie_sync_flag": "0"
         });
     })();
