@@ -1,0 +1,64 @@
+<html>
+<body>
+<a href="#" name="trigger conversion" onclick="zt('trigger', 'vijay-global-tag-zync-conversion-8946');">Trigger Conversion</a>
+<script>
+(function () {
+    // Extract all query params into an object
+    const params = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+
+    // Template with placeholders
+    const snippetTemplate = `
+        (function() {
+            (function(z, t, a, g) {
+                z['zt'] = z['zt'] || function() {
+                    (z['_zt'] = z['_zt'] || []).push(arguments);
+                },
+                i = t.createElement(a),
+                n = t.getElementsByTagName(a)[0];
+                i.async = 1;
+                i.src = g;
+                n.parentNode.insertBefore(i, n);
+            })(
+                window,
+                document,
+                'script',
+                'https://cdn.phoenix.boomtrain.com/p13n/vijay-global-tag/p13n.min.js'
+            );
+            zt('ztTrack', {
+                "custom1": "{custom1}",
+                "custom2": "{gt_custom_1}",
+                "categoryID": "{categoryID}",
+                "productID": "{productID}",
+                "custID": "{custID}",
+                "cartID": "{cartID}",
+                "cartTotal": "{cartTotal}",
+                "cartQty": "{cartQty}",
+                "OrderID": "{OrderID}",
+                "OrderAmount": "{OrderAmount}",
+                "gpp_sid": "",
+                "QAAutoDC20250529010542": "IDontKnowWhatIsThis",
+                "cookieless_ids": "{cookieless_ids}",
+                "gdpr": "",
+                "gdpr_consent": "",
+                "gpp": "",
+                "dsp_cookie_sync_flag": "1"
+            }, {
+                onComplete: (ids) => console.log("OnComplete : " + JSON.stringify(ids))
+            });
+        })();
+    `;
+
+    // Replace all placeholders in the template with matching query param values
+    const finalSnippet = Object.entries(params).reduce((tpl, [key, value]) => {
+        const placeholder = new RegExp(`\\{${key}\\}`, 'g'); // global replace
+        return tpl.replace(placeholder, value);
+    }, snippetTemplate);
+
+    // Inject and execute the script
+    const script = document.createElement("script");
+    script.textContent = finalSnippet;
+    document.body.appendChild(script);
+})();
+</script>
+</body>
+</html>
