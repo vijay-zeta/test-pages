@@ -25,23 +25,15 @@
                 'https://cdn.phoenix.boomtrain.com/p13n/vijay-global-tag/p13n.min.js'
             );
             zt('ztTrack', {
-                "custom1": "{custom1}",
+                "custom1": "{category_id}",
                 "custom2": "{gt_custom_1}",
-                "categoryID": "{categoryID}",
                 "productID": "{productID}",
-                "custID": "{custID}",
-                "cartID": "{cartID}",
-                "cartTotal": "{cartTotal}",
-                "cartQty": "{cartQty}",
                 "OrderID": "{OrderID}",
                 "OrderAmount": "{OrderAmount}",
-                "gpp_sid": "",
-                "QAAutoDC20250529010542": "IDontKnowWhatIsThis",
-                "cookieless_ids": "{cookieless_ids}",
-                "gdpr": "",
-                "gdpr_consent": "",
-                "gpp": "",
-                "dsp_cookie_sync_flag": "1"
+                "gdpr": "dummy_gdpr,
+                "gdpr_consent": "dummy_gdpr_consent",
+                "gpp": "dummy_gpp",
+                "gpp_sid": "dummy_gpp_sid"
             }, {
                 onComplete: (ids) => console.log("OnComplete : " + JSON.stringify(ids))
             });
