@@ -1,0 +1,17 @@
+---
+description: Push and publish an HTML file to GitHub Pages via push-publish.sh
+alwaysApply: false
+---
+
+# Push & Publish HTML File
+
+When the user asks to "push and publish" an HTML file, run the following shell command from the `test-pages` directory:
+
+```bash
+./push-publish.sh <filename>
+```
+
+- Replace `<filename>` with the HTML file the user is referring to (e.g. `global-tag-prod-publish.html`)
+- The script commits, pushes to `main`, and prints the live GitHub Pages URL
+- If `GITHUB_TOKEN` is set in the environment, it will be used; otherwise the baked-in token is the fallback
+- After the push succeeds, share the live URL: `https://vijay-zeta.github.io/test-pages/<filename>`
