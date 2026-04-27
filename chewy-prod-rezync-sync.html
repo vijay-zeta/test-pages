@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Rezync sync (chewy-prod)</title>
+</head>
+<body>
+<script async type="text/javascript">
+    function zync_call() {
+        var z = document.createElement("script");
+        var zmpID="chewy-prod";
+        var cache_buster=Date.now();
+        var PageUrl=encodeURIComponent(window.top.location.href).replace(/[!'()~]/g, escape).replace(/\*/g, "%2A"); // This macro contains JavaScript that is compatible with most web browsers. If your deployment uses a tag manager, please ensure compatibility with your specific implementation
+
+        var z_src = "https://live.rezync.com/sync?c=16b6410431b6374e780104abb0443ca8&p=d07201a4cbb400f02b9ca49a10efe661&k=chewy-prod-pixel-7615&zmpID="+zmpID+"&cache_buster="+cache_buster+"&PageUrl="+PageUrl;
+        z.setAttribute("src", z_src);
+        document.body.appendChild(z);
+    }
+
+    if (['complete', 'interactive'].indexOf(document.readyState) >= 0) {
+        zync_call();
+    } else {
+        window.addEventListener("DOMContentLoaded", function(){
+            zync_call();
+        });
+    }
+</script>
+</body>
+</html>
