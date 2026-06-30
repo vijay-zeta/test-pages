@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DATA-66046 preprod QA — identity + web events</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem; line-height: 1.5; }
+    h1 { font-size: 1.25rem; }
+    .step { border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    .step h2 { margin: 0 0 0.5rem; font-size: 1rem; }
+    button { margin: 0.25rem 0.5rem 0.25rem 0; padding: 0.4rem 0.8rem; cursor: pointer; }
+    .pass { color: #0a0; font-weight: bold; }
+    .fail { color: #c00; font-weight: bold; }
+    .pending { color: #666; }
+    pre { background: #f6f6f6; padding: 0.75rem; overflow: auto; font-size: 0.85rem; }
+    #log { max-height: 240px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>DATA-66046 — Preprod QA (site: vijay-sandbox)</h1>
+  <p>
+    Validates identity resolve, <code>updateUser</code> (backend <code>bt_person_set</code>),
+    and subsequent <strong>web</strong> <code>viewed</code> events. Open DevTools → Network + Console.
+    Use a fresh incognito window per run.
+  </p>
+  <p><strong>Run ID:</strong> <code id="runId"></code> · <strong>Test email:</strong> <code id="testEmail"></code></p>
+
+  <div class="step">
+    <h2>0. Prerequisites</h2>
+    <p class="pending" id="status-bt">Waiting for p13n (<code>bt</code>)…</p>
+    <p>Expect Zync load → <code>cdn.phoenix.boomtrain.com/p13n/vijay-sandbox/…</code></p>
+  </div>
+
+  <div class="step">
+    <h2>1. Identity resolve</h2>
+    <p>Confirms People API <code>/identify/resolve</code> (Network tab).</p>
+    <button type="button" id="btn-identify">Log current identity</button>
+    <p id="status-identify" class="pending">Not run</p>
+    <pre id="out-identify">—</pre>
+  </div>
+
+  <div class="step">
+    <h2>2. Web event — <code>viewed</code> (before update)</h2>
+    <p>POST <code>events.api…/event/track</code> with <code>http_method</code> (web-originated).</p>
+    <button type="button" id="btn-viewed-before">Track viewed (before update)</button>
+    <p id="status-viewed-before" class="pending">Not run</p>
+  </div>
+
+  <div class="step">
+    <h2>3. Identity update — <code>updateUser</code></h2>
+    <p>Calls People API <code>/persons</code> → backend emits <code>bt_person_set</code> (must <em>not</em> break later web events).</p>
+    <button type="button" id="btn-update">updateUser (set qa_marker)</button>
+    <p id="status-update" class="pending">Not run</p>
+    <pre id="out-update">—</pre>
+  </div>
+
+  <div class="step">
+    <h2>4. Web event — <code>viewed</code> (after update)</h2>
+    <p>Second web event should still resolve identity correctly (cache invalidated for web traffic).</p>
+    <button type="button" id="btn-viewed-after">Track viewed (after update)</button>
+    <p id="status-viewed-after" class="pending">Not run</p>
+  </div>
+
+  <div class="step">
+    <h2>5. Verify updated identity</h2>
+    <p><strong>Pass:</strong> <code>qa_marker</code> matches Run ID below.</p>
+    <button type="button" id="btn-verify">Verify qa_marker on identity</button>
+    <p id="status-verify" class="pending">Not run</p>
+    <pre id="out-verify">—</pre>
+  </div>
+
+  <div class="step">
+    <h2>Log</h2>
+    <pre id="log"></pre>
+  </div>
+
+  <!-- Zync pixel (same as preprod-update-user-demo.html) -->
+  <script async type="text/javascript">
+    function zync_call() {
+      var z = document.createElement("script");
+      var zmpID = "vijay-sandbox";
+      var cache_buster = Date.now();
+      var PageUrl = encodeURIComponent(window.top.location.href).replace(/[!'()~]/g, escape).replace(/\*/g, "%2A");
+      var z_src = "https://zync-kafka-external.dev.zetaglobal.io/sync?c=16b6410431b6374e780104abb0443ca8&p=cf8c608688e49da8b728ca1f02a09f0d&k=vijay-sandbox-pixel-6621&zmpID=" + zmpID + "&cache_buster=" + cache_buster + "&PageUrl=" + PageUrl;
+      z.setAttribute("src", z_src);
+      document.body.appendChild(z);
+    }
+    if (["complete", "interactive"].indexOf(document.readyState) >= 0) {
+      zync_call();
+    } else {
+      window.addEventListener("DOMContentLoaded", zync_call);
+    }
+  </script>
+
+  <script>
+    (function () {
+      const RUN_ID = "qa66046-" + Date.now();
+      const TEST_EMAIL = "data66046+" + RUN_ID + "@example.com";
+      const QA_MARKER = RUN_ID;
+
+      document.getElementById("runId").textContent = RUN_ID;
+      document.getElementById("testEmail").textContent = TEST_EMAIL;
+
+      const logEl = document.getElementById("log");
+      function log(msg) {
+        const line = new Date().toISOString() + " " + msg;
+        logEl.textContent = line + "\n" + logEl.textContent;
+        console.log("[DATA-66046 QA]", msg);
+      }
+
+      function setStatus(id, ok, text) {
+        const el = document.getElementById(id);
+        el.className = ok ? "pass" : ok === false ? "fail" : "pending";
+        el.textContent = text;
+      }
+
+      const waitForBT = (timeoutMs = 20000, intervalMs = 200) =>
+        new Promise((resolve, reject) => {
+          const start = Date.now();
+          (function poll() {
+            if ((window.bt && typeof window.bt === "function") || window._bt) {
+              resolve();
+              return;
+            }
+            if (Date.now() - start > timeoutMs) {
+              reject(new Error("Timed out waiting for bt/_bt"));
+              return;
+            }
+            setTimeout(poll, intervalMs);
+          })();
+        });
+
+      function btCall() {
+        if (window.bt && typeof window.bt === "function") return window.bt.bind(window);
+        if (window._bt && typeof window._bt.bt === "function") return window._bt.bt.bind(window._bt);
+        return null;
+      }
+
+      function identitySnapshot() {
+        if (!window._bt || !_bt._identity) return null;
+        try {
+          return {
+            bsin: typeof _bt._identity.bsin === "function" ? _bt._identity.bsin() : _bt._identity.bsin,
+            email: _bt._identity.email && _bt._identity.email(),
+            props: _bt._identity.props ? _bt._identity.props() : undefined,
+          };
+        } catch (e) {
+          return { error: String(e) };
+        }
+      }
+
+      function trackViewed(label) {
+        return new Promise((resolve) => {
+          const call = btCall();
+          if (!call) {
+            resolve({ ok: false, error: "bt not available" });
+            return;
+          }
+          call(
+            "track",
+            "viewed",
+            {
+              url: window.location.href,
+              qa_run_id: RUN_ID,
+              qa_step: label,
+            },
+            {
+              onSuccess: () => resolve({ ok: true }),
+              onFailure: (err) => resolve({ ok: false, error: err }),
+            }
+          );
+        });
+      }
+
+      function updateUser() {
+        return new Promise((resolve) => {
+          const call = btCall();
+          if (!call) {
+            resolve({ ok: false, error: "bt not available" });
+            return;
+          }
+          call(
+            "updateUser",
+            {
+              email: TEST_EMAIL,
+              qa_marker: QA_MARKER,
+              unique_client_ids: [{ name: "qa_cust_id", value: RUN_ID }],
+            },
+            {
+              onSuccess: () => resolve({ ok: true, identity: identitySnapshot() }),
+              onFailure: (err) => resolve({ ok: false, error: err }),
+            }
+          );
+        });
+      }
+
+      waitForBT()
+        .then(() => {
+          setStatus("status-bt", true, "p13n ready (bt loaded)");
+          log("bt/_bt available");
+        })
+        .catch((e) => {
+          setStatus("status-bt", false, e.message);
+          log("FAIL: " + e.message);
+        });
+
+      document.getElementById("btn-identify").addEventListener("click", () => {
+        const snap = identitySnapshot();
+        document.getElementById("out-identify").textContent = JSON.stringify(snap, null, 2);
+        if (snap && !snap.error) {
+          setStatus("status-identify", true, "Identity logged — check Network for /identify/resolve");
+          log("Identify OK: " + JSON.stringify(snap));
+        } else {
+          setStatus("status-identify", false, "Could not read _bt._identity");
+          log("Identify FAIL");
+        }
+      });
+
+      document.getElementById("btn-viewed-before").addEventListener("click", async () => {
+        const res = await trackViewed("before_update");
+        setStatus("status-viewed-before", res.ok, res.ok ? "viewed tracked (before) — check Network POST /event/track" : "FAIL: " + JSON.stringify(res.error));
+        log("viewed before: " + (res.ok ? "OK" : JSON.stringify(res.error)));
+      });
+
+      document.getElementById("btn-update").addEventListener("click", async () => {
+        const res = await updateUser();
+        document.getElementById("out-update").textContent = JSON.stringify(res.identity || res.error, null, 2);
+        setStatus("status-update", res.ok, res.ok ? "updateUser OK — check Network GET /persons" : "FAIL: " + JSON.stringify(res.error));
+        log("updateUser: " + (res.ok ? "OK qa_marker=" + QA_MARKER : JSON.stringify(res.error)));
+      });
+
+      document.getElementById("btn-viewed-after").addEventListener("click", async () => {
+        const res = await trackViewed("after_update");
+        setStatus("status-viewed-after", res.ok, res.ok ? "viewed tracked (after) — web event after bt_person_set path" : "FAIL: " + JSON.stringify(res.error));
+        log("viewed after: " + (res.ok ? "OK" : JSON.stringify(res.error)));
+      });
+
+      document.getElementById("btn-verify").addEventListener("click", () => {
+        const snap = identitySnapshot();
+        document.getElementById("out-verify").textContent = JSON.stringify(snap, null, 2);
+        const props = snap && snap.props;
+        const marker = props && (props.qa_marker || props["qa_marker"]);
+        const ok = marker === QA_MARKER;
+        setStatus(
+          "status-verify",
+          ok,
+          ok ? "PASS — qa_marker matches Run ID" : "FAIL — expected qa_marker=" + QA_MARKER + " got " + JSON.stringify(marker)
+        );
+        log("verify: " + (ok ? "PASS" : "FAIL"));
+      });
+    })();
+  </script>
+</body>
+</html>
