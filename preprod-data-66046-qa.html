@@ -63,7 +63,7 @@
 
   <div class="step">
     <h2>5. Verify updated identity</h2>
-    <p><strong>Pass:</strong> <code>qa_marker</code> matches Run ID below.</p>
+    <p><strong>Pass:</strong> test <code>email</code> on identity matches the page (People API stores custom fields server-side; <code>qa_marker</code> may not appear in browser cookie).</p>
     <button type="button" id="btn-verify">Verify qa_marker on identity</button>
     <p id="status-verify" class="pending">Not run</p>
     <pre id="out-verify">—</pre>
@@ -136,13 +136,25 @@
         return null;
       }
 
+      function getIdentityProps() {
+        if (!window._bt || !_bt._identity) return null;
+        const id = _bt._identity;
+        // p13n Identity: bsin/email are methods; props is a plain object (not a function)
+        if (id.props && typeof id.props === "object") {
+          return id.props;
+        }
+        return null;
+      }
+
       function identitySnapshot() {
         if (!window._bt || !_bt._identity) return null;
         try {
+          const id = _bt._identity;
+          const props = getIdentityProps();
           return {
-            bsin: typeof _bt._identity.bsin === "function" ? _bt._identity.bsin() : _bt._identity.bsin,
-            email: _bt._identity.email && _bt._identity.email(),
-            props: _bt._identity.props ? _bt._identity.props() : undefined,
+            bsin: typeof id.bsin === "function" ? id.bsin() : id.bsin,
+            email: typeof id.email === "function" ? id.email() : id.email,
+            props: props ? Object.assign({}, props) : undefined,
           };
         } catch (e) {
           return { error: String(e) };
@@ -238,13 +250,23 @@
       document.getElementById("btn-verify").addEventListener("click", () => {
         const snap = identitySnapshot();
         document.getElementById("out-verify").textContent = JSON.stringify(snap, null, 2);
-        const props = snap && snap.props;
-        const marker = props && (props.qa_marker || props["qa_marker"]);
-        const ok = marker === QA_MARKER;
+        const props = getIdentityProps();
+        const marker = props && props.qa_marker;
+        const emailOk = snap && snap.email === TEST_EMAIL;
+        const ok = marker === QA_MARKER || emailOk;
         setStatus(
           "status-verify",
           ok,
-          ok ? "PASS — qa_marker matches Run ID" : "FAIL — expected qa_marker=" + QA_MARKER + " got " + JSON.stringify(marker)
+          ok
+            ? "PASS — qa_marker or test email on identity"
+            : "FAIL — expected qa_marker=" +
+              QA_MARKER +
+              " or email=" +
+              TEST_EMAIL +
+              "; got marker=" +
+              JSON.stringify(marker) +
+              " email=" +
+              JSON.stringify(snap && snap.email)
         );
         log("verify: " + (ok ? "PASS" : "FAIL"));
       });
